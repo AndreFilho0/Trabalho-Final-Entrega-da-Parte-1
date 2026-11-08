@@ -12,7 +12,7 @@ CONFIG = {"allow_public_attrs": False, "sync_request_timeout": RPC_TIMEOUT}
 
 
 def serve(service, port):
-    server = ThreadedServer(service, port=port, protocol_config=CONFIG, reuse_addr=True)
+    server = ThreadedServer(service, hostname="0.0.0.0", port=port, protocol_config=CONFIG, reuse_addr=True)
     service.server = server
     return server
 
