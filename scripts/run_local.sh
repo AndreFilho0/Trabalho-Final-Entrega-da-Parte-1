@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 
 N=${1:-4}
 MSGS=${2:-30}
+export ORDERING=${ORDERING:-fifo} LOSS=${LOSS:-0.1} DELAY_MIN=${DELAY_MIN:-0} DELAY_MAX=${DELAY_MAX:-60}
 PY=${PYTHON:-.venv/bin/python}
 [ -x "$PY" ] || PY=python3
 

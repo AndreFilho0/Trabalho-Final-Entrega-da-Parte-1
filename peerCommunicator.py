@@ -56,12 +56,14 @@ class Peer(rpyc.Service):
             self.id = conn.root.register(HOST, self.udp_port, self.ctrl_port)
         print(f"Registrado no GroupManager com id {self.id}", flush=True)
 
-    def exposed_start(self, round_id, n_msgs):
+    def exposed_start(self, round_id, n_msgs, ordering="fifo", loss=0.0, delay_min=0.0, delay_max=0.0):
         if n_msgs == 0:
             print("Terminando.", flush=True)
             rpc.stop_later(self.server)
             return f"Peer {self.id} terminando."
-        threading.Thread(target=self.run_round, args=(round_id, n_msgs), daemon=True).start()
+        self.transport.configure(loss, delay_min, delay_max)
+        threading.Thread(target=self.run_round, args=(round_id, n_msgs, ordering, delay_max),
+                         daemon=True).start()
         return f"Peer {self.id} iniciou a rodada {round_id}."
 
     def on_datagram(self, d):
@@ -73,12 +75,12 @@ class Peer(rpyc.Service):
                 return
         mc.on_datagram(d)
 
-    def run_round(self, round_id, n_msgs):
+    def run_round(self, round_id, n_msgs, ordering, delay_max):
         with rpc.connect(GROUPMNGR_ADDR, GROUPMNGR_PORT) as conn:
             members = {peer_id: (host, udp) for peer_id, host, udp, _ in conn.root.list()}
 
         exp = Experiment(len(members))
-        mc = Multicast(self.id, round_id, members, self.transport, exp.deliver)
+        mc = Multicast(self.id, round_id, members, self.transport, exp.deliver, ordering)
         with self.lock:
             if self.current:
                 self.current.close()
@@ -88,7 +90,7 @@ class Peer(rpyc.Service):
         for d in replay:
             mc.on_datagram(d)
 
-        mc.multicast(["ready"])
+        mc.multicast(["ready"], reliable=True)
         if not exp.wait_all(exp.ready):
             print("Nem todos os peers responderam ao handshake.", flush=True)
             return
@@ -97,14 +99,21 @@ class Peer(rpyc.Service):
             time.sleep(random.randrange(10, 100) / 1000)
             mc.multicast(["data", k])
 
-        mc.multicast(["end"])
+        mc.multicast(["end"], reliable=True)
         if not exp.wait_all(exp.ended):
             print("Faltou o fim de algum peer; enviando o log assim mesmo.", flush=True)
+        if not mc.wait_acked(WAIT_TIMEOUT):
+            print("Algumas mensagens ficaram sem ACK.", flush=True)
+        if ordering == "none":
+            # O fim é confiável e pode chegar antes de dados crus ainda atrasados na rede.
+            time.sleep(delay_max / 1000 + 0.2)
 
         with exp.cond:
             log = tuple(exp.log)
+        stats = (("retransmissões", mc.retransmissions), ("duplicatas descartadas", mc.duplicates),
+                 ("datagramas enviados", self.transport.sent), ("descartados pela falha", self.transport.dropped))
         with rpc.connect(SERVER_ADDR, SERVER_PORT) as conn:
-            conn.root.submit_log(self.id, round_id, log)
+            conn.root.submit_log(self.id, round_id, log, stats)
         print(f"Log da rodada {round_id} enviado ({len(log)} mensagens).", flush=True)
 
 
