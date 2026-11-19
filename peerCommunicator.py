@@ -56,9 +56,16 @@ class Peer(rpyc.Service):
             self.id = conn.root.register(HOST, self.udp_port, self.ctrl_port)
         print(f"Registrado no GroupManager com id {self.id}", flush=True)
 
+    def unregister(self):
+        with rpc.connect(GROUPMNGR_ADDR, GROUPMNGR_PORT) as conn:
+            conn.root.unregister(self.id)
+        print(f"Removido do GroupManager (id {self.id})", flush=True)
+
     def exposed_start(self, round_id, n_msgs, ordering="fifo", loss=0.0, delay_min=0.0, delay_max=0.0):
         if n_msgs == 0:
             print("Terminando.", flush=True)
+            # Antes do stop_later: logo depois o comparisonServer desliga o GroupManager.
+            self.unregister()
             rpc.stop_later(self.server)
             return f"Peer {self.id} terminando."
         self.transport.configure(loss, delay_min, delay_max)

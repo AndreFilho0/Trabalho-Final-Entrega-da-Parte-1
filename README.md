@@ -101,6 +101,7 @@ No original, cada interação cliente-servidor abre um socket TCP, serializa um 
 | lista de peers | `send({"op": "list"})` + `recv(2048)` | `conn.root.list()` |
 | sinal de início | `send((peerNumber, nMsgs))` + `recv(512)` | `conn.root.start(rodada, n, ordering, loss, ...)` |
 | envio do log | `send(pickle.dumps(logList))`, servidor faz `recv(32768)` | `conn.root.submit_log(id, rodada, log, stats)` |
+| saída do grupo | (não existia) | `conn.root.unregister(id)` |
 | parada | `send({"op": "stop"})` | `conn.root.stop()` |
 
 ```python

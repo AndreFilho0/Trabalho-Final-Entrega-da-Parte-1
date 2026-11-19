@@ -21,6 +21,11 @@ class GroupManager(rpyc.Service):
         print(f"Peer {peer_id} registrado: {host} udp={udp_port} ctrl={ctrl_port}", flush=True)
         return peer_id
 
+    def exposed_unregister(self, peer_id):
+        with self.lock:
+            self.members.pop(peer_id, None)
+        print(f"Peer {peer_id} removido", flush=True)
+
     def exposed_list(self):
         # Tupla é enviada por valor; uma lista viraria referência remota (netref).
         with self.lock:
