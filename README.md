@@ -1,4 +1,4 @@
-# MPComm — Parte 1: RPC e multicast confiável com ordem FIFO
+# MPComm — Parte 1: RPC e multicast confiável com ordem FIFO 
 
 Trabalho final de **Sistemas Distribuídos (INF0344)** — Ciência da Computação, UFG.
 Base: [MPComm](https://github.com/professorfabio/MPComm), do Prof. Fábio M. Costa (cópia intacta em [`original/`](original/)).
