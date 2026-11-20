@@ -9,6 +9,7 @@ Base: [MPComm](https://github.com/professorfabio/MPComm), do Prof. Fábio M. Cos
 |---|---|---|
 | André de Oliveira Machado Filho | 202406913 | andrefilho@discente.ufg.br |
 | Ryan Gabryel Barbosa de Lima | 202301485 | ryanlima@discente.ufg.br |
+| Thauan Rodrigues Delfino de Oliveira | 202401829 | thauan.rodrigues@discente.ufg.br |
 
 ## Testar localmente em 3 passos
 
